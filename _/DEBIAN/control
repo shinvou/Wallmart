@@ -1,0 +1,9 @@
+Package: com.shinvou.Wallmart
+Name: Wallmart
+Depends: mobilesubstrate
+Architecture: iphoneos-arm
+Description: Wallmart
+Author: Timm Kandziora
+Section: Tweaks
+Version: 1.0-2
+Installed-Size: 588
