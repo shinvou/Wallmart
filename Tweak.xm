@@ -114,7 +114,7 @@ static void ReloadSettings()
 	}
 }
 
-- (void)_deviceLockedChanged:(id)notification
+- (void)_finishUIUnlockFromSource:(int)source withOptions:(id)options
 {
 	%orig;
 
