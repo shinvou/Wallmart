@@ -1,0 +1,10 @@
+{
+	entry = {
+		bundle = WallmartSettings;
+		cell = PSLinkCell;
+		detail = "WallmartSettingsListController";
+		icon = "WallmartSettings.png";
+		isController = 1;
+		label = Wallmart;
+	};
+}
