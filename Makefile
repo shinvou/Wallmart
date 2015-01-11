@@ -13,7 +13,6 @@ TWEAK_NAME = Wallmart
 Wallmart_FILES = Tweak.xm WallmartEvent.xm
 Wallmart_FRAMEWORKS = UIKit AssetsLibrary
 Wallmart_PRIVATE_FRAMEWORKS = PhotoLibrary
-Wallmart_LDFLAGS = -lactivator
 
 include $(THEOS_MAKE_PATH)/tweak.mk
 

@@ -5,7 +5,7 @@
 Wallmart is a jailbreak extension for iOS that allows the user to automatically change the wallpaper when he locks the device or triggers an activator action.
 
 ### How do I Wallmart?
-Just install the tweak and set the photo album name in Preferences.app. Depends on activator.
+Just install the tweak and set the photo album name in Preferences.app.
 
 ### How do I get?
 Compile it for yourself or use the .deb included.
