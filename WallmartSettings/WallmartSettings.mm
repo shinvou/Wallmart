@@ -30,6 +30,99 @@
 
 @end
 
+@interface WallmartBlurSettingsListController: PSListController { }
+@end
+
+@implementation WallmartBlurSettingsListController
+
+- (id)specifiers
+{
+    if (_specifiers == nil) {
+        [self setTitle:@"Blur Settings"];
+        
+        PSSpecifier *firstGroup = [PSSpecifier groupSpecifierWithName:@"MC BLURRY WITH SMARTIES"];
+        [firstGroup setProperty:@"Blur affects the performance, it is possible that switching the wallpaper takes longer." forKey:@"footerText"];
+        
+        PSSpecifier *blur_enabled = [PSSpecifier preferenceSpecifierNamed:@"Enabled"
+                                                                   target:self
+                                                                      set:@selector(setValue:forSpecifier:)
+                                                                      get:@selector(getValueForSpecifier:)
+                                                                   detail:Nil
+                                                                     cell:PSSwitchCell
+                                                                     edit:Nil];
+        [blur_enabled setIdentifier:@"blur_enabled"];
+        [blur_enabled setProperty:@(YES) forKey:@"enabled"];
+        
+        PSSpecifier *secondGroup = [PSSpecifier groupSpecifierWithName:@"Blur strenght"];
+        
+        PSSpecifier *blur_strenght = [PSSpecifier preferenceSpecifierNamed:nil
+                                                                   target:self
+                                                                      set:@selector(setValue:forSpecifier:)
+                                                                      get:@selector(getValueForSpecifier:)
+                                                                   detail:Nil
+                                                                     cell:PSSliderCell
+                                                                     edit:Nil];
+        [blur_strenght setIdentifier:@"blur_strenght"];
+        [blur_strenght setProperty:@(YES) forKey:@"enabled"];
+        
+        [blur_strenght setProperty:@(0) forKey:@"min"];
+        [blur_strenght setProperty:@(40) forKey:@"max"];
+        [blur_strenght setProperty:@(NO) forKey:@"showValue"];
+        
+        _specifiers = [NSArray arrayWithObjects:firstGroup, blur_enabled, secondGroup, blur_strenght, nil];
+    }
+    
+    return _specifiers;
+}
+
+- (id)getValueForSpecifier:(PSSpecifier *)specifier
+{
+    NSMutableDictionary *settings = [[NSMutableDictionary alloc] initWithContentsOfFile:settingsPath];
+    
+    if ([specifier.identifier isEqualToString:@"blur_enabled"]) {
+        if (settings) {
+            if ([settings objectForKey:@"blur_enabled"]) {
+                return [settings objectForKey:@"blur_enabled"];
+            } else {
+                return @(NO);
+            }
+        } else {
+            return @(NO);
+        }
+    } else if ([specifier.identifier isEqualToString:@"blur_strenght"]) {
+        if (settings) {
+            if ([settings objectForKey:@"blur_strenght"]) {
+                return [settings objectForKey:@"blur_strenght"];
+            } else {
+                return @(5);
+            }
+        } else {
+            return @(5);
+        }
+    }
+    
+    return nil;
+}
+
+- (void)setValue:(id)value forSpecifier:(PSSpecifier *)specifier
+{
+    NSMutableDictionary *settings = [[NSMutableDictionary alloc] init];
+    [settings addEntriesFromDictionary:[NSDictionary dictionaryWithContentsOfFile:settingsPath]];
+    
+    if ([specifier.identifier isEqualToString:@"blur_enabled"]) {
+        [settings setObject:value forKey:@"blur_enabled"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"blur_strenght"]) {
+        [settings setObject:value forKey:@"blur_strenght"];
+        [settings writeToFile:settingsPath atomically:YES];
+    }
+    
+    CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.shinvou.wallmart/reloadSettings"), NULL, NULL, TRUE);
+}
+
+@end
+
+
 @interface WallmartSettingsListController: PSListController { }
 
 @property (strong, nonatomic) NSMutableArray *albumNames;
@@ -101,6 +194,17 @@
         [perspective_zoom setIdentifier:@"perspective_zoom"];
         [perspective_zoom setProperty:@(YES) forKey:@"enabled"];
         
+        PSSpecifier *blur_controller_link = [PSSpecifier preferenceSpecifierNamed:@"blur_controller_link"
+                                                                           target:self
+                                                                              set:nil
+                                                                              get:nil
+                                                                           detail:[WallmartBlurSettingsListController class]
+                                                                             cell:PSLinkCell
+                                                                             edit:Nil];
+        blur_controller_link.name = @"Blur settings";
+        [blur_controller_link setIdentifier:@"blur_controller_link"];
+        [blur_controller_link setProperty:@(YES) forKey:@"enabled"];
+        
         PSSpecifier *secondGroup = [PSSpecifier groupSpecifierWithName:@"interwall"];
         [secondGroup setProperty:@"Set an interwall for the wallpaper to be changed automatically, e.g. '30' would mean '30 seconds'. Default is 60 seconds.\n\nInterwall also works if Wallmart is not enabled." forKey:@"footerText"];
         
@@ -154,7 +258,7 @@
         [github setProperty:@(YES) forKey:@"enabled"];
         [github setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/WallmartSettings.bundle/github.png"] forKey:@"iconImage"];
 
-        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, shuffle_enabled, perspective_zoom, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
+        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, shuffle_enabled, perspective_zoom, blur_controller_link, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
     }
 
     return _specifiers;
@@ -295,7 +399,7 @@
                      titles:_albumNames
                 shortTitles:_albumNames];
             
-            [self insertSpecifier:album_list afterSpecifierID:@"perspective_zoom" animated:NO];
+            [self insertSpecifier:album_list afterSpecifierID:@"blur_controller_link" animated:NO];
         }
     } failureBlock:^(NSError *error) {
         NSLog(@"\n\n [Wallmart Settings] Following error occured: %@", [error description]);

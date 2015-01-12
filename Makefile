@@ -11,7 +11,7 @@ include theos/makefiles/common.mk
 
 TWEAK_NAME = Wallmart
 Wallmart_FILES = Tweak.xm WallmartEvent.xm
-Wallmart_FRAMEWORKS = UIKit AssetsLibrary
+Wallmart_FRAMEWORKS = UIKit AssetsLibrary CoreImage CoreGraphics
 Wallmart_PRIVATE_FRAMEWORKS = PhotoLibrary PersistentConnection
 
 include $(THEOS_MAKE_PATH)/tweak.mk

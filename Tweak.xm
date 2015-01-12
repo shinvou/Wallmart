@@ -39,11 +39,32 @@ static BOOL enabled = YES;
 static PLWallpaperMode wallpaperMode = PLWallpaperModeBoth;
 static BOOL shuffleEnabled = NO;
 static BOOL perspectiveZoom = YES;
+static BOOL blurEnabled = NO;
+static int blurStrenght = 5;
 static BOOL interwallEnabled = NO;
 static int interwallTime = 60;
 
 static void SetWallpaper(UIImage *image)
 {
+	if (blurEnabled) {
+		CIFilter *gaussianBlurFilter = [CIFilter filterWithName:@"CIGaussianBlur"];
+		[gaussianBlurFilter setDefaults];
+		[gaussianBlurFilter setValue:[CIImage imageWithCGImage:image.CGImage] forKey:kCIInputImageKey];
+		[gaussianBlurFilter setValue:@(blurStrenght) forKey:kCIInputRadiusKey];
+
+		CIImage *outputImage = [gaussianBlurFilter outputImage];
+		CIContext *context = [CIContext contextWithOptions:nil];
+		CGRect rect = [outputImage extent];
+
+		rect.origin.x += (rect.size.width  - image.size.width ) / 2;
+		rect.origin.y += (rect.size.height - image.size.height) / 2;
+		rect.size = image.size;
+
+		CGImageRef cgimg = [context createCGImage:outputImage fromRect:rect];
+		image = [UIImage imageWithCGImage:cgimg];
+		CGImageRelease(cgimg);
+	}
+
 	PLStaticWallpaperImageViewController *wallpaperViewController = [[PLStaticWallpaperImageViewController alloc] initWithUIImage:image];
 	wallpaperViewController.saveWallpaperData = YES;
 
@@ -134,6 +155,14 @@ static void ReloadSettings()
 
 		if ([settings objectForKey:@"perspective_zoom"]) {
 			perspectiveZoom = [[settings objectForKey:@"perspective_zoom"] boolValue];
+		}
+
+		if ([settings objectForKey:@"blur_enabled"]) {
+			blurEnabled = [[settings objectForKey:@"blur_enabled"] boolValue];
+		}
+
+		if ([settings objectForKey:@"blur_strenght"]) {
+			blurStrenght = [[settings objectForKey:@"blur_strenght"] intValue];
 		}
 
 		if ([settings objectForKey:@"interwall_enabled"]) {
