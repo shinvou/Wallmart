@@ -75,6 +75,16 @@
                           titles:@[@"Lockscreen and homescreen", @"Lockscreen only", @"Homescreen only"]
                      shortTitles:@[@"Lockscreen and homescreen", @"Lockscreen only", @"Homescreen only"]];
         
+        PSSpecifier *shuffle_enabled = [PSSpecifier preferenceSpecifierNamed:@"Shuffle"
+                                                                      target:self
+                                                                         set:@selector(setValue:forSpecifier:)
+                                                                         get:@selector(getValueForSpecifier:)
+                                                                      detail:Nil
+                                                                        cell:PSSwitchCell
+                                                                        edit:Nil];
+        [shuffle_enabled setIdentifier:@"shuffle_enabled"];
+        [shuffle_enabled setProperty:@(YES) forKey:@"enabled"];
+        
         PSSpecifier *perspective_zoom = [PSSpecifier preferenceSpecifierNamed:@"Perspective Zoom"
                                                                        target:self
                                                                           set:@selector(setValue:forSpecifier:)
@@ -149,7 +159,7 @@
         [github setProperty:@(YES) forKey:@"enabled"];
         [github setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/WallmartSettings.bundle/github.png"] forKey:@"iconImage"];
 
-        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, perspective_zoom, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
+        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, shuffle_enabled, perspective_zoom, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
     }
 
     return _specifiers;
@@ -219,6 +229,16 @@
         } else {
             return @(YES);
         }
+    } else if ([specifier.identifier isEqualToString:@"shuffle_enabled"]) {
+        if (settings) {
+            if ([settings objectForKey:@"shuffle_enabled"]) {
+                return [settings objectForKey:@"shuffle_enabled"];
+            } else {
+                return @(NO);
+            }
+        } else {
+            return @(NO);
+        }
     }
 
     return nil;
@@ -246,6 +266,9 @@
         [settings writeToFile:settingsPath atomically:YES];
     } else if ([specifier.identifier isEqualToString:@"perspective_zoom"]) {
         [settings setObject:value forKey:@"perspective_zoom"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"shuffle_enabled"]) {
+        [settings setObject:value forKey:@"shuffle_enabled"];
         [settings writeToFile:settingsPath atomically:YES];
     }
 

@@ -37,6 +37,7 @@ static PCPersistentTimer *persistentTimer = nil;
 
 static BOOL enabled = YES;
 static PLWallpaperMode wallpaperMode = PLWallpaperModeBoth;
+static BOOL shuffleEnabled = NO;
 static BOOL perspectiveZoom = YES;
 static BOOL interwallEnabled = NO;
 static int interwallTime = 60;
@@ -70,10 +71,14 @@ static void GetWallpapersFromAlbum()
 						UIImage *image = [UIImage imageWithCGImage:[representation fullScreenImage]];
 						SetWallpaper(image);
 
-						currentIndex++;
+						if (shuffleEnabled) {
+							currentIndex = arc4random_uniform([group numberOfAssets]);
+						} else {
+							currentIndex++;
 
-						if (currentIndex == [group numberOfAssets]) {
-							currentIndex = 0;
+							if (currentIndex == [group numberOfAssets]) {
+								currentIndex = 0;
+							}
 						}
 
 						*stop = YES;
@@ -90,10 +95,14 @@ static void GetWallpapersFromAlbum()
 						UIImage *image = [UIImage imageWithCGImage:[representation fullScreenImage]];
 						SetWallpaper(image);
 
-						currentIndex++;
+						if (shuffleEnabled) {
+							currentIndex = arc4random_uniform([group numberOfAssets]);
+						} else {
+							currentIndex++;
 
-						if (currentIndex == [group numberOfAssets]) {
-							currentIndex = 0;
+							if (currentIndex == [group numberOfAssets]) {
+								currentIndex = 0;
+							}
 						}
 
 						*stop = YES;
@@ -117,6 +126,10 @@ static void ReloadSettings()
 
 		if ([settings objectForKey:@"wallpaperMode"]) {
 			wallpaperMode = [[settings objectForKey:@"wallpaperMode"] intValue];
+		}
+
+		if ([settings objectForKey:@"shuffle_enabled"]) {
+			shuffleEnabled = [[settings objectForKey:@"shuffle_enabled"] boolValue];
 		}
 
 		if ([settings objectForKey:@"perspective_zoom"]) {
