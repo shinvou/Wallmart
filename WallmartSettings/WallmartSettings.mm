@@ -1,4 +1,5 @@
 #import <Preferences/Preferences.h>
+#import <AssetsLibrary/AssetsLibrary.h>
 
 #define settingsPath @"/var/mobile/Library/Preferences/com.shinvou.wallmart.plist"
 #define UIColorRGB(r, g, b) [UIColor colorWithRed:r/255.0 green:g/255.0 blue:b/255.0 alpha:1.0]
@@ -30,6 +31,9 @@
 @end
 
 @interface WallmartSettingsListController: PSListController { }
+
+@property (strong, nonatomic) NSMutableArray *albumNames;
+
 @end
 
 @implementation WallmartSettingsListController
@@ -37,6 +41,8 @@
 - (id)specifiers
 {
     if (_specifiers == nil) {
+        [self populateAlbumNames];
+        
         [self setTitle:@"Wallmart"];
 
         PSSpecifier *banner = [PSSpecifier preferenceSpecifierNamed:nil
@@ -94,17 +100,6 @@
                                                                          edit:Nil];
         [perspective_zoom setIdentifier:@"perspective_zoom"];
         [perspective_zoom setProperty:@(YES) forKey:@"enabled"];
-
-        PSTextFieldSpecifier *albumName = [PSTextFieldSpecifier preferenceSpecifierNamed:nil
-                                                                                  target:self
-                                                                                     set:@selector(setValue:forSpecifier:)
-                                                                                     get:@selector(getValueForSpecifier:)
-                                                                                  detail:Nil
-                                                                                    cell:PSEditTextCell
-                                                                                    edit:Nil];
-        [albumName setPlaceholder:@"Enter the name of the album ..."];
-        [albumName setIdentifier:@"albumName"];
-        [albumName setProperty:@(YES) forKey:@"enabled"];
         
         PSSpecifier *secondGroup = [PSSpecifier groupSpecifierWithName:@"interwall"];
         [secondGroup setProperty:@"Set an interwall for the wallpaper to be changed automatically, e.g. '30' would mean '30 seconds'. Default is 60 seconds.\n\nInterwall also works if Wallmart is not enabled." forKey:@"footerText"];
@@ -159,7 +154,7 @@
         [github setProperty:@(YES) forKey:@"enabled"];
         [github setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/WallmartSettings.bundle/github.png"] forKey:@"iconImage"];
 
-        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, shuffle_enabled, perspective_zoom, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
+        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, shuffle_enabled, perspective_zoom, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
     }
 
     return _specifiers;
@@ -188,16 +183,6 @@
             }
         } else {
             return @(0);
-        }
-    } else if ([specifier.identifier isEqualToString:@"albumName"]) {
-        if (settings) {
-            if ([settings objectForKey:@"albumName"]) {
-                return [settings objectForKey:@"albumName"];
-            } else {
-                return nil;
-            }
-        } else {
-            return nil;
         }
     } else if ([specifier.identifier isEqualToString:@"interwall_enabled"]) {
         if (settings) {
@@ -229,6 +214,16 @@
         } else {
             return @(YES);
         }
+    } else if ([specifier.identifier isEqualToString:@"album_list"]) {
+        if (settings) {
+            if ([settings objectForKey:@"albumName"]) {
+                return [settings objectForKey:@"albumName"];
+            } else {
+                return nil;
+            }
+        } else {
+            return nil;
+        }
     } else if ([specifier.identifier isEqualToString:@"shuffle_enabled"]) {
         if (settings) {
             if ([settings objectForKey:@"shuffle_enabled"]) {
@@ -255,9 +250,6 @@
     } else if ([specifier.identifier isEqualToString:@"wallpaperMode"]) {
         [settings setObject:value forKey:@"wallpaperMode"];
         [settings writeToFile:settingsPath atomically:YES];
-    } else if ([specifier.identifier isEqualToString:@"albumName"]) {
-        [settings setObject:value forKey:@"albumName"];
-        [settings writeToFile:settingsPath atomically:YES];
     } else if ([specifier.identifier isEqualToString:@"interwall_enabled"]) {
         [settings setObject:value forKey:@"interwall_enabled"];
         [settings writeToFile:settingsPath atomically:YES];
@@ -270,9 +262,44 @@
     } else if ([specifier.identifier isEqualToString:@"shuffle_enabled"]) {
         [settings setObject:value forKey:@"shuffle_enabled"];
         [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"album_list"]) {
+        [settings setObject:value forKey:@"albumName"];
+        [settings writeToFile:settingsPath atomically:YES];
     }
 
     CFNotificationCenterPostNotification(CFNotificationCenterGetDarwinNotifyCenter(), CFSTR("com.shinvou.wallmart/reloadSettings"), NULL, NULL, TRUE);
+}
+
+- (void)populateAlbumNames
+{
+    NSMutableArray *albumNames = [[NSMutableArray alloc] init];
+    
+    ALAssetsLibrary *assetsLibrary = [[ALAssetsLibrary alloc] init];
+    
+    [assetsLibrary enumerateGroupsWithTypes:ALAssetsGroupAll usingBlock:^(ALAssetsGroup *group, BOOL *stop) {
+        if ([group valueForProperty:ALAssetsGroupPropertyName]) {
+            [albumNames addObject:[group valueForProperty:ALAssetsGroupPropertyName]];
+        } else {
+            _albumNames = albumNames;
+            
+            PSSpecifier *album_list = [PSSpecifier preferenceSpecifierNamed:@"Choose album"
+                                                                     target:self
+                                                                        set:@selector(setValue:forSpecifier:)
+                                                                        get:@selector(getValueForSpecifier:)
+                                                                     detail:[PSListItemsController class]
+                                                                       cell:PSLinkListCell
+                                                                       edit:Nil];
+            [album_list setIdentifier:@"album_list"];
+            [album_list setProperty:@(YES) forKey:@"enabled"];
+            [album_list setValues:_albumNames
+                     titles:_albumNames
+                shortTitles:_albumNames];
+            
+            [self insertSpecifier:album_list afterSpecifierID:@"perspective_zoom" animated:NO];
+        }
+    } failureBlock:^(NSError *error) {
+        NSLog(@"\n\n [Wallmart Settings] Following error occured: %@", [error description]);
+    }];
 }
 
 - (void)openTwitter

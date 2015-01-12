@@ -5,7 +5,7 @@ include theos/makefiles/common.mk
 BUNDLE_NAME = WallmartSettings
 WallmartSettings_FILES = WallmartSettings.mm
 WallmartSettings_INSTALL_PATH = /Library/PreferenceBundles
-WallmartSettings_FRAMEWORKS = UIKit
+WallmartSettings_FRAMEWORKS = UIKit AssetsLibrary
 WallmartSettings_PRIVATE_FRAMEWORKS = Preferences
 WallmartSettings_CFLAGS = -fobjc-arc
 
