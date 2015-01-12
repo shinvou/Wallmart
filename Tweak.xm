@@ -23,6 +23,10 @@
 - (void)invalidate;
 @end
 
+@interface SBSUIWallpaperPreviewViewController : UIViewController
+- (void)setMotionEnabled:(BOOL)enabled;
+@end
+
 #define settingsPath @"/var/mobile/Library/Preferences/com.shinvou.wallmart.plist"
 
 static BOOL unlockedAfterBoot = NO;
@@ -33,6 +37,7 @@ static PCPersistentTimer *persistentTimer = nil;
 
 static BOOL enabled = YES;
 static PLWallpaperMode wallpaperMode = PLWallpaperModeBoth;
+static BOOL perspectiveZoom = YES;
 static BOOL interwallEnabled = NO;
 static int interwallTime = 60;
 
@@ -114,6 +119,10 @@ static void ReloadSettings()
 			wallpaperMode = [[settings objectForKey:@"wallpaperMode"] intValue];
 		}
 
+		if ([settings objectForKey:@"perspective_zoom"]) {
+			perspectiveZoom = [[settings objectForKey:@"perspective_zoom"] boolValue];
+		}
+
 		if ([settings objectForKey:@"interwall_enabled"]) {
 			interwallEnabled = [[settings objectForKey:@"interwall_enabled"] boolValue];
 		}
@@ -185,6 +194,17 @@ static void ReloadSettings()
 	}
 
 	[self configureTimer];
+}
+
+%end
+
+%hook PLStaticWallpaperImageViewController
+
+- (void)providerLegibilitySettingsChanged:(SBSUIWallpaperPreviewViewController *)wallpaperPreviewViewController
+{
+	[wallpaperPreviewViewController setMotionEnabled:perspectiveZoom];
+
+	%orig(wallpaperPreviewViewController);
 }
 
 %end

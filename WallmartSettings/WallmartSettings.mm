@@ -74,6 +74,16 @@
         [wallpaperMode setValues:@[@(0), @(2), @(1)]
                           titles:@[@"Lockscreen and homescreen", @"Lockscreen only", @"Homescreen only"]
                      shortTitles:@[@"Lockscreen and homescreen", @"Lockscreen only", @"Homescreen only"]];
+        
+        PSSpecifier *perspective_zoom = [PSSpecifier preferenceSpecifierNamed:@"Perspective Zoom"
+                                                                       target:self
+                                                                          set:@selector(setValue:forSpecifier:)
+                                                                          get:@selector(getValueForSpecifier:)
+                                                                       detail:Nil
+                                                                         cell:PSSwitchCell
+                                                                         edit:Nil];
+        [perspective_zoom setIdentifier:@"perspective_zoom"];
+        [perspective_zoom setProperty:@(YES) forKey:@"enabled"];
 
         PSTextFieldSpecifier *albumName = [PSTextFieldSpecifier preferenceSpecifierNamed:nil
                                                                                   target:self
@@ -139,7 +149,7 @@
         [github setProperty:@(YES) forKey:@"enabled"];
         [github setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/WallmartSettings.bundle/github.png"] forKey:@"iconImage"];
 
-        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
+        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, perspective_zoom, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
     }
 
     return _specifiers;
@@ -199,6 +209,16 @@
         } else {
             return nil;
         }
+    } else if ([specifier.identifier isEqualToString:@"perspective_zoom"]) {
+        if (settings) {
+            if ([settings objectForKey:@"perspective_zoom"]) {
+                return [settings objectForKey:@"perspective_zoom"];
+            } else {
+                return @(YES);
+            }
+        } else {
+            return @(YES);
+        }
     }
 
     return nil;
@@ -223,6 +243,9 @@
         [settings writeToFile:settingsPath atomically:YES];
     } else if ([specifier.identifier isEqualToString:@"interwallTime"]) {
         [settings setObject:value forKey:@"interwallTime"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"perspective_zoom"]) {
+        [settings setObject:value forKey:@"perspective_zoom"];
         [settings writeToFile:settingsPath atomically:YES];
     }
 
