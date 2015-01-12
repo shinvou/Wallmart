@@ -11,15 +11,30 @@
 #import <PhotoLibrary/PLStaticWallpaperImageViewController.h>
 #import <Foundation/NSDistributedNotificationCenter.h>
 
+@interface SpringBoard
+- (void)applicationDidFinishLaunching:(id)application;
+- (void)configureTimer;
+- (void)updateWallpaper;
+@end
+
+@interface PCPersistentTimer : NSObject
+- (id)initWithFireDate:(id)arg1 serviceIdentifier:(id)arg2 target:(id)arg3 selector:(SEL)arg4 userInfo:(id)arg5;
+- (void)scheduleInRunLoop:(id)arg1;
+- (void)invalidate;
+@end
+
 #define settingsPath @"/var/mobile/Library/Preferences/com.shinvou.wallmart.plist"
 
 static BOOL unlockedAfterBoot = NO;
 static int currentIndex = 0;
 static NSString *albumName = @"Wallmart";
 static ALAssetsLibrary *assetsLibrary = nil;
+static PCPersistentTimer *persistentTimer = nil;
 
 static BOOL enabled = YES;
 static PLWallpaperMode wallpaperMode = PLWallpaperModeBoth;
+static BOOL interwallEnabled = NO;
+static int interwallTime = 60;
 
 static void SetWallpaper(UIImage *image)
 {
@@ -98,6 +113,31 @@ static void ReloadSettings()
 		if ([settings objectForKey:@"wallpaperMode"]) {
 			wallpaperMode = [[settings objectForKey:@"wallpaperMode"] intValue];
 		}
+
+		if ([settings objectForKey:@"interwall_enabled"]) {
+			interwallEnabled = [[settings objectForKey:@"interwall_enabled"] boolValue];
+		}
+
+		if ([settings objectForKey:@"interwallTime"]) {
+			NSNumberFormatter *numberFormatter = [[NSNumberFormatter alloc] init];
+			NSLocale *locale = [[NSLocale alloc] initWithLocaleIdentifier:@"en_US"];
+			[numberFormatter setLocale:locale];
+			[numberFormatter setAllowsFloats:NO];
+
+			if (![[settings objectForKey:@"interwallTime"] isEqualToString:@""] && [numberFormatter numberFromString:[settings objectForKey:@"interwallTime"]]) {
+				if ([[settings objectForKey:@"interwallTime"] intValue] != interwallTime) {
+					interwallTime = [[settings objectForKey:@"interwallTime"] intValue];
+
+					[persistentTimer invalidate];
+					[(SpringBoard *)[UIApplication sharedApplication] configureTimer];
+				}
+			} else {
+				interwallTime = 60;
+			}
+
+			[numberFormatter release];
+			[locale release];
+		}
 	}
 
 	[settings release];
@@ -119,6 +159,32 @@ static void ReloadSettings()
 	%orig;
 
 	unlockedAfterBoot = YES;
+}
+
+%end
+
+%hook SpringBoard
+
+- (void)applicationDidFinishLaunching:(UIApplication *)application
+{
+	%orig;
+
+	[self configureTimer];
+}
+
+%new - (void)configureTimer
+{
+	persistentTimer = [[PCPersistentTimer alloc] initWithFireDate:[[NSDate date] dateByAddingTimeInterval:interwallTime] serviceIdentifier:@"com.shinvou.wallmart" target:self selector:@selector(updateWallpaper) userInfo:nil];
+	[persistentTimer scheduleInRunLoop:[NSRunLoop mainRunLoop]];
+}
+
+%new - (void)updateWallpaper
+{
+	if (interwallEnabled && unlockedAfterBoot) {
+		GetWallpapersFromAlbum();
+	}
+
+	[self configureTimer];
 }
 
 %end

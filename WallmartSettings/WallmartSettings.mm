@@ -49,7 +49,7 @@
         [banner setProperty:[WallmartBanner class] forKey:@"cellClass"];
         [banner setProperty:@"206" forKey:@"height"];
 
-        PSSpecifier *firstGroup = [PSSpecifier groupSpecifierWithName:@""];
+        PSSpecifier *firstGroup = [PSSpecifier groupSpecifierWithName:@"wallmart a priori"];
         [firstGroup setProperty:@"Default album name is 'Wallmart'." forKey:@"footerText"];
 
         PSSpecifier *enabled = [PSSpecifier preferenceSpecifierNamed:@"Enabled"
@@ -62,7 +62,7 @@
         [enabled setIdentifier:@"enabled"];
         [enabled setProperty:@(YES) forKey:@"enabled"];
 
-        PSSpecifier *wallpaperMode = [PSSpecifier preferenceSpecifierNamed:@"Set wallpaper mode"
+        PSSpecifier *wallpaperMode = [PSSpecifier preferenceSpecifierNamed:@"Wallpaper mode"
                                                                     target:self
                                                                        set:@selector(setValue:forSpecifier:)
                                                                        get:@selector(getValueForSpecifier:)
@@ -85,9 +85,33 @@
         [albumName setPlaceholder:@"Enter the name of the album ..."];
         [albumName setIdentifier:@"albumName"];
         [albumName setProperty:@(YES) forKey:@"enabled"];
+        
+        PSSpecifier *secondGroup = [PSSpecifier groupSpecifierWithName:@"interwall"];
+        [secondGroup setProperty:@"Set an interwall for the wallpaper to be changed automatically, e.g. '30' would mean '30 seconds'. Default is 60 seconds.\n\nInterwall also works if Wallmart is not enabled." forKey:@"footerText"];
+        
+        PSSpecifier *interwall_enabled = [PSSpecifier preferenceSpecifierNamed:@"Enabled"
+                                                                        target:self
+                                                                           set:@selector(setValue:forSpecifier:)
+                                                                           get:@selector(getValueForSpecifier:)
+                                                                        detail:Nil
+                                                                          cell:PSSwitchCell
+                                                                          edit:Nil];
+        [interwall_enabled setIdentifier:@"interwall_enabled"];
+        [interwall_enabled setProperty:@(YES) forKey:@"enabled"];
+        
+        PSTextFieldSpecifier *interwallTime = [PSTextFieldSpecifier preferenceSpecifierNamed:nil
+                                                                                      target:self
+                                                                                         set:@selector(setValue:forSpecifier:)
+                                                                                         get:@selector(getValueForSpecifier:)
+                                                                                      detail:Nil
+                                                                                        cell:PSEditTextCell
+                                                                                        edit:Nil];
+        [interwallTime setPlaceholder:@"Enter interwall in seconds ..."];
+        [interwallTime setIdentifier:@"interwallTime"];
+        [interwallTime setProperty:@(YES) forKey:@"enabled"];
 
-        PSSpecifier *secondGroup = [PSSpecifier groupSpecifierWithName:@"contact developer"];
-        [secondGroup setProperty:@"Feel free to follow me on twitter for any updates on my apps and tweaks or contact me for support questions.\n \nThis tweak is Open-Source, so make sure to check out my GitHub." forKey:@"footerText"];
+        PSSpecifier *thirdGroup = [PSSpecifier groupSpecifierWithName:@"contact developer"];
+        [thirdGroup setProperty:@"Feel free to follow me on twitter for any updates on my apps and tweaks or contact me for support questions.\n \nThis tweak is Open-Source, so make sure to check out my GitHub." forKey:@"footerText"];
 
         PSSpecifier *twitter = [PSSpecifier preferenceSpecifierNamed:@"twitter"
                                                               target:self
@@ -115,7 +139,7 @@
         [github setProperty:@(YES) forKey:@"enabled"];
         [github setProperty:[UIImage imageWithContentsOfFile:@"/Library/PreferenceBundles/WallmartSettings.bundle/github.png"] forKey:@"iconImage"];
 
-        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, albumName, secondGroup, twitter, github, nil];
+        _specifiers = [NSArray arrayWithObjects:banner, firstGroup, enabled, wallpaperMode, albumName, secondGroup, interwall_enabled, interwallTime, thirdGroup, twitter, github, nil];
     }
 
     return _specifiers;
@@ -155,6 +179,26 @@
         } else {
             return nil;
         }
+    } else if ([specifier.identifier isEqualToString:@"interwall_enabled"]) {
+        if (settings) {
+            if ([settings objectForKey:@"interwall_enabled"]) {
+                return [settings objectForKey:@"interwall_enabled"];
+            } else {
+                return @(NO);
+            }
+        } else {
+            return @(NO);
+        }
+    } else if ([specifier.identifier isEqualToString:@"interwallTime"]) {
+        if (settings) {
+            if ([settings objectForKey:@"interwallTime"]) {
+                return [settings objectForKey:@"interwallTime"];
+            } else {
+                return nil;
+            }
+        } else {
+            return nil;
+        }
     }
 
     return nil;
@@ -173,6 +217,12 @@
         [settings writeToFile:settingsPath atomically:YES];
     } else if ([specifier.identifier isEqualToString:@"albumName"]) {
         [settings setObject:value forKey:@"albumName"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"interwall_enabled"]) {
+        [settings setObject:value forKey:@"interwall_enabled"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"interwallTime"]) {
+        [settings setObject:value forKey:@"interwallTime"];
         [settings writeToFile:settingsPath atomically:YES];
     }
 
