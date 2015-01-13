@@ -41,11 +41,27 @@ static BOOL shuffleEnabled = NO;
 static BOOL perspectiveZoom = YES;
 static BOOL blurEnabled = NO;
 static int blurStrenght = 5;
+static int blurMode = 0;
 static BOOL interwallEnabled = NO;
 static int interwallTime = 60;
 
-static void SetWallpaper(UIImage *image)
+static void SetWallpaper(UIImage *image, int mode)
 {
+	PLStaticWallpaperImageViewController *wallpaperViewController = [[PLStaticWallpaperImageViewController alloc] initWithUIImage:image];
+	wallpaperViewController.saveWallpaperData = YES;
+
+	PLWallpaperMode wallMode = mode;
+	uintptr_t address = (uintptr_t)&wallMode;
+	object_setInstanceVariable(wallpaperViewController, "_wallpaperMode", *(PLWallpaperMode **)address);
+
+	[wallpaperViewController _savePhoto];
+	[wallpaperViewController release];
+}
+
+static void PrepareWallpaper(UIImage *image)
+{
+	UIImage *normalImage = image;
+
 	if (blurEnabled) {
 		CIFilter *gaussianBlurFilter = [CIFilter filterWithName:@"CIGaussianBlur"];
 		[gaussianBlurFilter setDefaults];
@@ -61,21 +77,45 @@ static void SetWallpaper(UIImage *image)
 		rect.size = image.size;
 
 		CGImageRef cgimg = [context createCGImage:outputImage fromRect:rect];
-		image = [UIImage imageWithCGImage:cgimg];
+		UIImage *blurredImage = [UIImage imageWithCGImage:cgimg];
 		CGImageRelease(cgimg);
+
+		switch (blurMode) {
+			case 1:
+				if (wallpaperMode == 0) {
+					SetWallpaper(normalImage, 2);
+					SetWallpaper(blurredImage, 1);
+				} else if (wallpaperMode == 1) {
+					SetWallpaper(blurredImage, 1);
+				} else {
+					SetWallpaper(normalImage, 2);
+				}
+
+				break;
+
+			case 2:
+				if (wallpaperMode == 0) {
+					SetWallpaper(normalImage, 1);
+					SetWallpaper(blurredImage, 2);
+				} else if (wallpaperMode == 2) {
+					SetWallpaper(blurredImage, 2);
+				} else {
+					SetWallpaper(normalImage, 1);
+				}
+
+				break;
+
+			default:
+				SetWallpaper(blurredImage, wallpaperMode);
+
+				break;
+		}
+	} else {
+		SetWallpaper(normalImage, wallpaperMode);
 	}
-
-	PLStaticWallpaperImageViewController *wallpaperViewController = [[PLStaticWallpaperImageViewController alloc] initWithUIImage:image];
-	wallpaperViewController.saveWallpaperData = YES;
-
-	uintptr_t address = (uintptr_t)&wallpaperMode;
-	object_setInstanceVariable(wallpaperViewController, "_wallpaperMode", *(PLWallpaperMode **)address);
-
-	[wallpaperViewController _savePhoto];
-	[wallpaperViewController release];
 }
 
-static void GetWallpapersFromAlbum()
+static void GetWallpaperFromAlbum()
 {
 	if (!assetsLibrary) {
 		assetsLibrary = [[ALAssetsLibrary alloc] init];
@@ -90,7 +130,7 @@ static void GetWallpapersFromAlbum()
 					if (index == currentIndex) {
 						ALAssetRepresentation *representation = [result defaultRepresentation];
 						UIImage *image = [UIImage imageWithCGImage:[representation fullScreenImage]];
-						SetWallpaper(image);
+						PrepareWallpaper(image);
 
 						if (shuffleEnabled) {
 							currentIndex = arc4random_uniform([group numberOfAssets]);
@@ -114,7 +154,7 @@ static void GetWallpapersFromAlbum()
 					if (index == currentIndex) {
 						ALAssetRepresentation *representation = [result defaultRepresentation];
 						UIImage *image = [UIImage imageWithCGImage:[representation fullScreenImage]];
-						SetWallpaper(image);
+						PrepareWallpaper(image);
 
 						if (shuffleEnabled) {
 							currentIndex = arc4random_uniform([group numberOfAssets]);
@@ -165,6 +205,10 @@ static void ReloadSettings()
 			blurStrenght = [[settings objectForKey:@"blur_strenght"] intValue];
 		}
 
+		if ([settings objectForKey:@"wallpaper_blur_options"]) {
+			blurMode = [[settings objectForKey:@"wallpaper_blur_options"] intValue];
+		}
+
 		if ([settings objectForKey:@"interwall_enabled"]) {
 			interwallEnabled = [[settings objectForKey:@"interwall_enabled"] boolValue];
 		}
@@ -192,6 +236,11 @@ static void ReloadSettings()
 	}
 
 	[settings release];
+
+	if (enabled && unlockedAfterBoot) {
+		currentIndex--;
+		GetWallpaperFromAlbum();
+	}
 }
 
 %hook SBLockScreenManager
@@ -201,7 +250,7 @@ static void ReloadSettings()
 	%orig;
 
 	if (enabled && unlockedAfterBoot) {
-		GetWallpapersFromAlbum();
+		GetWallpaperFromAlbum();
 	}
 }
 
@@ -232,7 +281,7 @@ static void ReloadSettings()
 %new - (void)updateWallpaper
 {
 	if (interwallEnabled && unlockedAfterBoot) {
-		GetWallpapersFromAlbum();
+		GetWallpaperFromAlbum();
 	}
 
 	[self configureTimer];
@@ -254,7 +303,7 @@ static void ReloadSettings()
 %ctor {
 	@autoreleasepool {
 		[[NSDistributedNotificationCenter defaultCenter] addObserverForName:@"WallmartEvent" object:nil queue:[NSOperationQueue mainQueue] usingBlock:^(NSNotification *notification) {
-			GetWallpapersFromAlbum();
+			GetWallpaperFromAlbum();
 		}];
 
 		ReloadSettings();

@@ -69,7 +69,23 @@
         [blur_strenght setProperty:@(40) forKey:@"max"];
         [blur_strenght setProperty:@(NO) forKey:@"showValue"];
         
-        _specifiers = [NSArray arrayWithObjects:firstGroup, blur_enabled, secondGroup, blur_strenght, nil];
+        PSSpecifier *thirdGroup = [PSSpecifier groupSpecifierWithName:@""];
+        [thirdGroup setProperty:@"These settings respect the default wallpaper mode settings." forKey:@"footerText"];
+        
+        PSSpecifier *wallpaper_blur_options = [PSSpecifier preferenceSpecifierNamed:@"More options"
+                                                                             target:self
+                                                                                set:@selector(setValue:forSpecifier:)
+                                                                                get:@selector(getValueForSpecifier:)
+                                                                             detail:[PSListItemsController class]
+                                                                               cell:PSLinkListCell
+                                                                               edit:Nil];
+        [wallpaper_blur_options setIdentifier:@"wallpaper_blur_options"];
+        [wallpaper_blur_options setProperty:@(YES) forKey:@"enabled"];
+        [wallpaper_blur_options setValues:@[@(0), @(2), @(1)]
+                                   titles:@[@"Blur lockscreen and homescreen", @"Blur lockscreen only", @"Blur homescreen only"]
+                              shortTitles:@[@"Blur lockscreen and homescreen", @"Blur lockscreen only", @"Blur homescreen only"]];
+        
+        _specifiers = [NSArray arrayWithObjects:firstGroup, blur_enabled, secondGroup, blur_strenght, thirdGroup, wallpaper_blur_options, nil];
     }
     
     return _specifiers;
@@ -99,6 +115,16 @@
         } else {
             return @(5);
         }
+    } else if ([specifier.identifier isEqualToString:@"wallpaper_blur_options"]) {
+        if (settings) {
+            if ([settings objectForKey:@"wallpaper_blur_options"]) {
+                return [settings objectForKey:@"wallpaper_blur_options"];
+            } else {
+                return @(0);
+            }
+        } else {
+            return @(0);
+        }
     }
     
     return nil;
@@ -114,6 +140,9 @@
         [settings writeToFile:settingsPath atomically:YES];
     } else if ([specifier.identifier isEqualToString:@"blur_strenght"]) {
         [settings setObject:value forKey:@"blur_strenght"];
+        [settings writeToFile:settingsPath atomically:YES];
+    } else if ([specifier.identifier isEqualToString:@"wallpaper_blur_options"]) {
+        [settings setObject:value forKey:@"wallpaper_blur_options"];
         [settings writeToFile:settingsPath atomically:YES];
     }
     
