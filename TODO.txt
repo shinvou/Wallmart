@@ -1,0 +1,8 @@
+- option to resize photos to force fit the screen
+- option to enable cycling only between specific hours
+- separate album for ls and hs
+- option to dim wallpaper
+
+- folder customizer support
+- weatherboard support
+- auxo support

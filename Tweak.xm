@@ -12,14 +12,14 @@
 #import <Foundation/NSDistributedNotificationCenter.h>
 
 @interface SpringBoard
-- (void)applicationDidFinishLaunching:(id)application;
+- (void)applicationDidFinishLaunching:(UIApplication *)application;
 - (void)configureTimer;
 - (void)updateWallpaper;
 @end
 
 @interface PCPersistentTimer : NSObject
-- (id)initWithFireDate:(id)arg1 serviceIdentifier:(id)arg2 target:(id)arg3 selector:(SEL)arg4 userInfo:(id)arg5;
-- (void)scheduleInRunLoop:(id)arg1;
+- (id)initWithFireDate:(NSDate *)date serviceIdentifier:(NSString *)identifier target:(id)target selector:(SEL)selector userInfo:(id)userInfo;
+- (void)scheduleInRunLoop:(NSRunLoop *)runLoop;
 - (void)invalidate;
 @end
 
