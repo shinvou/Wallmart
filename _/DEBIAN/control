@@ -5,5 +5,5 @@ Architecture: iphoneos-arm
 Description: Wallmart
 Author: Timm Kandziora
 Section: Tweaks
-Version: 1.8-1
-Installed-Size: 644
+Version: 2.0-1
+Installed-Size: 576

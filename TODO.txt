@@ -1,8 +1,15 @@
-- option to resize photos to force fit the screen
-- option to enable cycling only between specific hours
-- separate album for ls and hs
+### FEATURE REQUESTS
 - option to dim wallpaper
+- option to resize photos to force fit the screen
 
-- folder customizer support
-- weatherboard support
-- auxo support
+## MAYBE
+- change one wall more often/less often than other one
+- support for paths
+
+### POSSIBLE INCOMPATIBILITY (NEEDS TO BE CONFIRMED)
+- auxo
+- barrel
+- folder customizer
+- springtomize
+- weatherboard
+- lockinfo
